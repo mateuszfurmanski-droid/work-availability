@@ -1,188 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Work availability</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Work availability</title>
 
-<style>
-body{
-  font-family: Arial, sans-serif;
-  background:#0f172a;
-  color:#e5e7eb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  height:100vh;
-  margin:0;
-}
-.box{
-  max-width:420px;
-  padding:24px;
-  border-radius:12px;
-  background:#020617;
-  text-align:center;
-  box-shadow:0 0 40px rgba(0,0,0,0.4);
-}
-p{ color:#94a3b8; margin-top:6px; }
-.status{ margin:16px 0; font-size:18px; line-height:1.35; }
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#0f172a;
+      color:#e5e7eb;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      margin:0;
+      padding:16px;
+    }
+    .box{
+      width:100%;
+      max-width:420px;
+      padding:24px;
+      border-radius:12px;
+      background:#020617;
+      text-align:center;
+      box-shadow:0 0 40px rgba(0,0,0,0.4);
+    }
+    h2{ margin:0; }
+    p{ color:#94a3b8; margin:8px 0 0; }
 
-select, input{
-  width:100%;
-  padding:12px;
-  border-radius:8px;
-  font-size:16px;
-  border:0;
-  outline:none;
-  margin-top:12px;
-}
+    .status{
+      margin:16px 0;
+      font-size:18px;
+      line-height:1.35;
+      min-height:52px;
+    }
 
-a.button{
-  display:block;
-  margin-top:16px;
-  padding:14px;
-  border-radius:8px;
-  font-weight:bold;
-  text-decoration:none;
-  text-align:center;
-}
+    /* --- INPUT LOOK (DARK) --- */
+    select, .date-fake{
+      width:100%;
+      padding:12px;
+      border-radius:10px;
+      font-size:16px;
+      border:1px solid rgba(148,163,184,0.18);
+      outline:none;
+      background:#0b1220;
+      color:#e5e7eb;
+      margin-top:12px;
+      box-shadow: 0 0 0 1px rgba(2,6,23,0.4) inset;
+    }
+    select:focus, .date-fake:focus{
+      border-color: rgba(34,197,94,0.6);
+    }
 
-.hint{
-  margin-top:10px;
-  font-size:13px;
-  color:#94a3b8;
-}
+    /* reduce native select weirdness */
+    select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      background-image:none;
+    }
 
-.date-wrap{
-  position:relative;
-  width:100%;
-  margin-top:12px;
-}
-.date-real{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  opacity:0;
-  cursor:pointer;
-}
-.date-fake{
-  padding-right:44px;
-}
-.date-icon{
-  position:absolute;
-  right:14px;
-  top:50%;
-  transform:translateY(-50%);
-  pointer-events:none;
-  font-size:18px;
-}
-</style>
+    .select-wrap{
+      position:relative;
+      width:100%;
+    }
+    .select-icon{
+      position:absolute;
+      right:14px;
+      top:50%;
+      transform: translateY(calc(-50% + 6px)); /* compensates select margin-top */
+      pointer-events:none;
+      opacity:.9;
+      font-size:18px;
+      color:#94a3b8;
+    }
+
+    /* --- DATE (CONSISTENT) --- */
+    .date-wrap{
+      position:relative;
+      width:100%;
+      margin-top:12px;
+    }
+    .date-real{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      opacity:0;          /* hidden native date input */
+      cursor:pointer;
+    }
+    .date-fake{
+      margin-top:0;
+      padding-right:44px;
+      cursor:pointer;
+    }
+    .date-icon{
+      position:absolute;
+      right:14px;
+      top:50%;
+      transform:translateY(-50%);
+      pointer-events:none;
+      opacity:.9;
+      font-size:18px;
+      color:#94a3b8;
+    }
+
+    /* --- BUTTON --- */
+    a.button{
+      display:block;
+      margin-top:16px;
+      padding:14px;
+      border-radius:10px;
+      font-weight:bold;
+      text-decoration:none;
+      text-align:center;
+      user-select:none;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:13px;
+      color:#94a3b8;
+    }
+  </style>
 </head>
 
 <body>
-<div class="box">
-  <h2>Work availability</h2>
-  <p>One link agencies actually understand.</p>
+  <div class="box">
+    <h2>Work availability</h2>
+    <p>One link agencies actually understand.</p>
 
-  <select id="statusSelect">
-    <option value="available">🟢 Available now</option>
-    <option value="soon">🟡 Available soon</option>
-    <option value="booked">🔴 Currently booked</option>
-  </select>
+    <!-- STATUS MENU -->
+    <div class="select-wrap">
+      <select id="statusSelect">
+        <option value="available">🟢 Available now</option>
+        <option value="soon">🟡 Available soon</option>
+        <option value="booked">🔴 Currently booked</option>
+      </select>
+      <span class="select-icon">▾</span>
+    </div>
 
-  <div id="soonWrap" class="date-wrap">
-    <input id="soonDate" type="date" class="date-real">
-    <input id="soonDateFake" type="text" class="date-fake" placeholder="dd/mm/yyyy" readonly>
-    <span class="date-icon">📅</span>
+    <!-- DATE (only for SOON) -->
+    <div id="soonWrap" class="date-wrap">
+      <input id="soonDate" type="date" class="date-real">
+      <input id="soonDateFake" type="text" class="date-fake" placeholder="dd/mm/yyyy" readonly>
+      <span class="date-icon">📅</span>
+    </div>
+
+    <!-- STATUS TEXT -->
+    <div id="statusText" class="status"></div>
+
+    <!-- WHATSAPP BUTTON -->
+    <a id="waBtn" class="button" target="_blank" rel="noopener">Open WhatsApp</a>
+
+    <div class="hint">
+      Tip: Choose status + (if SOON) pick date, then tap WhatsApp.
+    </div>
   </div>
 
-  <div id="statusText" class="status"></div>
+  <script>
+  (() => {
 
-  <a id="waBtn" class="button" target="_blank">Open WhatsApp</a>
+    /* ✅ WSTAW SWÓJ NUMER (bez +, bez spacji) */
+    const PHONE = "447474744800";
 
-  <div class="hint">
-    Tip: Choose status + (if SOON) pick date, then tap WhatsApp.
-  </div>
-</div>
+    const BASE_LINK = "https://mateuszfurmanski-droid.github.io/work-availability/";
 
-<script>
-(() => {
+    const statusSelect = document.getElementById("statusSelect");
+    const soonWrap = document.getElementById("soonWrap");
+    const soonDate = document.getElementById("soonDate");
+    const soonFake = document.getElementById("soonDateFake");
+    const statusText = document.getElementById("statusText");
+    const waBtn = document.getElementById("waBtn");
 
-  /* 🔴 ZMIEN TYLKO TEN NUMER */
-  const PHONE = "447474744800";
-
-  const BASE_LINK = "https://mateuszfurmanski-droid.github.io/work-availability/";
-
-  const statusSelect = document.getElementById("statusSelect");
-  const soonWrap = document.getElementById("soonWrap");
-  const soonDate = document.getElementById("soonDate");
-  const soonFake = document.getElementById("soonDateFake");
-  const statusText = document.getElementById("statusText");
-  const waBtn = document.getElementById("waBtn");
-
-  function formatDMY(v){
-    if(!v) return "";
-    const [y,m,d] = v.split("-");
-    return `${d}/${m}/${y}`;
-  }
-
-  function setBtn(bg, fg, text){
-    waBtn.style.background = bg;
-    waBtn.style.color = fg;
-    waBtn.href = `https://wa.me/${PHONE}?text=` + encodeURIComponent(text);
-  }
-
-  function update(){
-    const s = statusSelect.value;
-
-    if(s === "available"){
-      soonWrap.style.display = "none";
-      statusText.innerHTML = "🟢 <strong>AVAILABLE</strong><br><small>Ready to start now</small>";
-      setBtn(
-        "#22c55e",
-        "#022c22",
-        "Hi, I’m available for work now. Link: " + BASE_LINK
-      );
+    function formatDMY(yyyy_mm_dd){
+      if(!yyyy_mm_dd) return "";
+      const [y,m,d] = yyyy_mm_dd.split("-");
+      return `${d}/${m}/${y}`;
     }
 
-    if(s === "soon"){
-      soonWrap.style.display = "block";
-      const d = soonDate.value ? formatDMY(soonDate.value) : "next week";
-      statusText.innerHTML = "🟡 <strong>SOON</strong><br><small>Available from: " + d + "</small>";
-      setBtn(
-        "#eab308",
-        "#1f2937",
-        "Hi, I’m finishing my current job and will be available from " + d + ". Link: " + BASE_LINK
-      );
+    function setBtn(bg, fg, msg){
+      waBtn.style.background = bg;
+      waBtn.style.color = fg;
+      waBtn.href = `https://wa.me/${PHONE}?text=` + encodeURIComponent(msg);
     }
 
-    if(s === "booked"){
-      soonWrap.style.display = "none";
-      statusText.innerHTML = "🔴 <strong>BOOKED</strong><br><small>Currently working</small>";
-      setBtn(
-        "#ef4444",
-        "#111827",
-        "Hi, I’m currently booked on a job. Please check my availability here: " + BASE_LINK
-      );
+    function syncFake(){
+      soonFake.value = formatDMY(soonDate.value);
     }
-  }
 
-  soonDate.addEventListener("change", () => {
-    soonFake.value = formatDMY(soonDate.value);
+    function update(){
+      const s = statusSelect.value;
+
+      if(s === "available"){
+        soonWrap.style.display = "none";
+        statusText.innerHTML = "🟢 <strong>AVAILABLE</strong><br><small>Ready to start now</small>";
+        setBtn(
+          "#22c55e", "#022c22",
+          "Hi, I’m available for work now. Link: " + BASE_LINK
+        );
+        return;
+      }
+
+      if(s === "soon"){
+        soonWrap.style.display = "block";
+        syncFake();
+        const d = soonDate.value ? formatDMY(soonDate.value) : "next week";
+        statusText.innerHTML = "🟡 <strong>SOON</strong><br><small>Available from: " + d + "</small>";
+        setBtn(
+          "#eab308", "#1f2937",
+          "Hi, I’m finishing my current job and will be available from " + d + ". Link: " + BASE_LINK
+        );
+        return;
+      }
+
+      if(s === "booked"){
+        soonWrap.style.display = "none";
+        statusText.innerHTML = "🔴 <strong>BOOKED</strong><br><small>Currently working</small>";
+        setBtn(
+          "#ef4444", "#111827",
+          "Hi, I’m currently booked on a job. Please check my availability here: " + BASE_LINK
+        );
+        return;
+      }
+    }
+
+    statusSelect.addEventListener("change", update);
+
+    soonDate.addEventListener("change", () => {
+      syncFake();
+      update();
+    });
+
+    soonFake.addEventListener("click", () => {
+      if (soonDate.showPicker) soonDate.showPicker();
+      else soonDate.click();
+    });
+
+    // init
+    syncFake();
     update();
-  });
-
-  soonFake.addEventListener("click", () => {
-    if (soonDate.showPicker) soonDate.showPicker();
-    else soonDate.click();
-  });
-
-  statusSelect.addEventListener("change", update);
-
-  update();
-})();
-</script>
-
+  })();
+  </script>
 </body>
 </html>
