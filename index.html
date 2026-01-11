@@ -35,7 +35,7 @@
     p{ color:#94a3b8; margin:8px 0 0; }
 
     .status{
-      margin:16px 0;
+      margin:16px 0 10px;
       font-size:18px;
       line-height:1.35;
       min-height:52px;
@@ -49,7 +49,7 @@
 
     select{
       width:100%;
-      padding:12px 44px 12px 12px; /* space for right icon */
+      padding:12px 44px 12px 12px;
       border-radius:10px;
       font-size:16px;
       border:1px solid rgba(148,163,184,0.18);
@@ -82,28 +82,77 @@
       line-height:1;
     }
 
-    a.button{
+    /* Pick date row (Edge-safe: real input sits on top, invisible) */
+    .pickdate{
+      position:relative;
+      width:100%;
+      margin-top:10px;
+      padding:12px 44px 12px 12px;
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,0.18);
+      background:#0b1220;
+      color:#e5e7eb;
+      text-align:left;
+      box-shadow: 0 0 0 1px rgba(2,6,23,0.4) inset;
+    }
+
+    .pickdate small{
       display:block;
+      margin-top:4px;
+      color:#94a3b8;
+      font-size:13px;
+      line-height:1.2;
+    }
+
+    .pickdate-real{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      opacity:0;         /* invisible but clickable */
+      cursor:pointer;
+    }
+
+    .pickdate-icon{
+      position:absolute;
+      right:14px;
+      top:50%;
+      transform:translateY(-50%);
+      pointer-events:none;
+      opacity:.95;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Buttons */
+    .actions{
+      display:flex;
+      gap:12px;
       margin-top:16px;
+    }
+
+    a.button{
+      flex:1;
       padding:14px;
       border-radius:10px;
       font-weight:bold;
       text-decoration:none;
       text-align:center;
       user-select:none;
+      display:block;
+    }
+
+    .call-btn{
+      background:#0b1220;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.25);
     }
 
     .hint{
       margin-top:10px;
       font-size:13px;
       color:#94a3b8;
-    }
-
-    .subline{
-      margin-top:8px;
-      font-size:13px;
-      color:#94a3b8;
-      min-height:18px;
     }
   </style>
 </head>
@@ -113,7 +162,7 @@
     <h2>Work availability</h2>
     <p>One link agencies actually understand.</p>
 
-    <!-- STATUS MENU (one field only) -->
+    <!-- STATUS MENU -->
     <div class="field">
       <select id="statusSelect">
         <option value="available">🟢 Available now</option>
@@ -121,61 +170,67 @@
         <option value="booked">🔴 Currently booked</option>
       </select>
 
-      <!-- RIGHT ICON: swaps chevron <-> calendar -->
       <span id="rightIcon" class="right-icon">
         <span class="chevron">▾</span>
       </span>
     </div>
 
-    <!-- small helper line (shows chosen date when SOON) -->
-    <div id="soonLine" class="subline"></div>
+    <!-- Edge-safe date picker row (shown only when SOON) -->
+    <div id="pickDateRow" class="pickdate" style="display:none;">
+      Pick availability date
+      <small id="pickedDateText">Tap to select date</small>
+
+      <!-- Real input sits on top (Edge will open picker because it's a real user click) -->
+      <input id="soonDate" type="date" class="pickdate-real" aria-label="Pick availability date">
+
+      <!-- Yellow calendar+clock icon -->
+      <span class="pickdate-icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24"
+             xmlns="http://www.w3.org/2000/svg"
+             fill="none"
+             stroke="#eab308"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <circle cx="17" cy="17" r="4"/>
+          <line x1="17" y1="17" x2="17" y2="15"/>
+          <line x1="17" y1="17" x2="19" y2="17"/>
+        </svg>
+      </span>
+    </div>
 
     <!-- STATUS TEXT -->
     <div id="statusText" class="status"></div>
 
-    <!-- WHATSAPP BUTTON -->
-    <a id="waBtn" class="button" target="_blank" rel="noopener">Open WhatsApp</a>
-
-    <div class="hint">
-      Tip: Choose status (if SOON you’ll be prompted to pick a date), then tap WhatsApp.
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+      <a id="waBtn" class="button" target="_blank" rel="noopener">WhatsApp</a>
+      <a id="callBtn" class="button call-btn">Call</a>
     </div>
 
-    <!-- hidden date picker (no second visible field) -->
-    <input id="soonDate" type="date" style="position:absolute; left:-9999px; opacity:0; width:1px; height:1px;">
+    <div class="hint">
+      Tip: Choose status (if SOON, tap “Pick availability date”).
+    </div>
   </div>
 
   <script>
   (() => {
-
-    /* ✅ Twój numer (bez +, bez spacji) */
-    const PHONE = "447474744800";
-
-    const BASE_LINK = "https://mateuszfurmanski-droid.github.io/work-availability/";
+    const PHONE = "447474744800"; // without + and spaces
 
     const statusSelect = document.getElementById("statusSelect");
     const soonDate = document.getElementById("soonDate");
+    const pickDateRow = document.getElementById("pickDateRow");
+    const pickedDateText = document.getElementById("pickedDateText");
     const statusText = document.getElementById("statusText");
-    const soonLine = document.getElementById("soonLine");
     const waBtn = document.getElementById("waBtn");
+    const callBtn = document.getElementById("callBtn");
     const rightIcon = document.getElementById("rightIcon");
 
-    const calendarSvg = `
-      <svg width="22" height="22" viewBox="0 0 24 24"
-           xmlns="http://www.w3.org/2000/svg"
-           fill="none"
-           stroke="#eab308"
-           stroke-width="2"
-           stroke-linecap="round"
-           stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-        <circle cx="17" cy="17" r="4"/>
-        <line x1="17" y1="17" x2="17" y2="15"/>
-        <line x1="17" y1="17" x2="19" y2="17"/>
-      </svg>
-    `;
+    callBtn.href = `tel:+${PHONE}`;
 
     function formatDMY(yyyy_mm_dd){
       if(!yyyy_mm_dd) return "";
@@ -189,15 +244,9 @@
       waBtn.href = `https://wa.me/${PHONE}?text=` + encodeURIComponent(msg);
     }
 
-    function openDatePicker(){
-      // best-effort cross-browser
-      if (soonDate.showPicker) soonDate.showPicker();
-      else soonDate.click();
-    }
-
     function setRightIcon(mode){
-      // mode: "soon" shows calendar, otherwise chevron
-      if(mode === "soon") rightIcon.innerHTML = calendarSvg;
+      // keep it simple: chevron for non-SOON, calendar icon is already on the pick row
+      if(mode === "soon") rightIcon.innerHTML = `<span class="chevron">▾</span>`;
       else rightIcon.innerHTML = `<span class="chevron">▾</span>`;
     }
 
@@ -205,58 +254,47 @@
       const s = statusSelect.value;
 
       if(s === "available"){
+        pickDateRow.style.display = "none";
         setRightIcon("other");
-        soonLine.textContent = "";
         statusText.innerHTML = "🟢 <strong>AVAILABLE</strong><br><small>Ready to start now</small>";
         setBtn(
           "#22c55e", "#022c22",
-          "Hi, I’m available for work now. Link: " + BASE_LINK
+          "Hi Mateusz, we may have work available for you. Please call us when you can."
         );
         return;
       }
 
       if(s === "soon"){
+        pickDateRow.style.display = "block";
         setRightIcon("soon");
+
         const d = soonDate.value ? formatDMY(soonDate.value) : "";
-        const shown = d || "pick a date";
-        soonLine.textContent = d ? `Available from: ${d}` : `Pick the date you’ll be available.`;
+        pickedDateText.textContent = d ? `Selected: ${d}` : "Tap to select date";
 
-        statusText.innerHTML = "🟡 <strong>SOON</strong><br><small>Available from: " + (d || "next week") + "</small>";
-
+        statusText.innerHTML = "🟡 <strong>SOON</strong><br><small>Available soon</small>";
         setBtn(
           "#eab308", "#1f2937",
-          "Hi, I’m finishing my current job and will be available from " + (d || "next week") + ". Link: " + BASE_LINK
+          "Hi Mateusz, we may have upcoming work for you. Please call us when you can."
         );
         return;
       }
 
       if(s === "booked"){
+        pickDateRow.style.display = "none";
         setRightIcon("other");
-        soonLine.textContent = "";
         statusText.innerHTML = "🔴 <strong>BOOKED</strong><br><small>Currently working</small>";
         setBtn(
           "#ef4444", "#111827",
-          "Hi, I’m currently booked on a job. Please check my availability here: " + BASE_LINK
+          "Hi Mateusz, please keep us in mind for your next availability. Call us when free."
         );
         return;
       }
     }
 
-    // when user selects SOON -> open calendar immediately
-    statusSelect.addEventListener("change", () => {
-      update();
-      if(statusSelect.value === "soon") {
-        // small delay helps some mobile browsers
-        setTimeout(openDatePicker, 50);
-      }
-    });
-
-    // when date is picked -> refresh texts + WA link
+    statusSelect.addEventListener("change", update);
     soonDate.addEventListener("change", update);
 
-    // init
     update();
-
   })();
   </script>
 </body>
