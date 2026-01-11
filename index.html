@@ -1,70 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Work availability</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .box {
-      max-width: 420px;
-      text-align: center;
-      padding: 24px;
-      border-radius: 12px;
-      background: #020617;
-      box-shadow: 0 0 40px rgba(0,0,0,0.4);
-    }
-    h1 {
-      margin-bottom: 8px;
-    }
-    p {
-      color: #94a3b8;
-    }
-    .status {
-      margin: 20px 0;
-      font-size: 18px;
-    }
-    a.button {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 14px 20px;
-      background: #22c55e;
-      color: #022c22;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h1>Work availability</h1>
-    <p>One link instead of CVs, messages and chaos.</p>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work availability</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+  margin:0;
+}
+.box {
+  max-width:420px;
+  padding:24px;
+  border-radius:12px;
+  background:#020617;
+  text-align:center;
+}
+p { color:#94a3b8; }
 
-<div class="status">
-  🟢 <strong>AVAILABLE</strong><br/>
-  <small>Ready to start now</small>
+.status {
+  margin:16px 0;
+  font-size:18px;
+}
+
+select {
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  font-size:16px;
+}
+
+a.button {
+  display:block;
+  margin-top:16px;
+  padding:14px;
+  border-radius:8px;
+  font-weight:bold;
+  text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+<div class="box">
+  <h2>Work availability</h2>
+  <p>One link agencies actually understand.</p>
+
+  <select id="statusSelect" onchange="updateStatus()">
+    <option value="available">🟢 Available now</option>
+    <option value="soon">🟡 Available soon</option>
+    <option value="booked">🔴 Currently booked</option>
+  </select>
+
+  <div id="statusText" class="status">
+    🟢 <strong>AVAILABLE</strong><br>
+    <small>Ready to start now</small>
+  </div>
+
+  <a id="waBtn" class="button"
+     style="background:#22c55e;color:#022c22;"
+     target="_blank">
+     Open WhatsApp
+  </a>
 </div>
 
+<script>
+function updateStatus() {
+  const s = document.getElementById("statusSelect").value;
+  const text = document.getElementById("statusText");
+  const btn = document.getElementById("waBtn");
+  const link = "https://mateuszfurmanski-droid.github.io/work-availability/";
 
+  if (s === "available") {
+    text.innerHTML = "🟢 <strong>AVAILABLE</strong><br><small>Ready to start now</small>";
+    btn.style.background = "#22c55e";
+    btn.style.color = "#022c22";
+    btn.href = "https://wa.me/?text=Hi,%20I’m%20available%20for%20work%20now.%20Link:%20" + link;
+  }
 
-  <a 
-  class="button"
-  style="background:#22c55e;color:#022c22;"
-  href="https://wa.me/?text=Hi,%20this%20is%20Mateusz.%20I’m%20available%20for%20work%20now.%20Here’s%20my%20live%20availability:%20https://mateuszfurmanski-droid.github.io/work-availability/"
-  target="_blank">
-  Open WhatsApp
-  </a>
+  if (s === "soon") {
+    text.innerHTML = "🟡 <strong>SOON</strong><br><small>Available from next week</small>";
+    btn.style.background = "#eab308";
+    btn.style.color = "#1f2937";
+    btn.href = "https://wa.me/?text=Hi,%20I’m%20finishing%20my%20current%20job%20and%20will%20be%20available%20soon.%20Link:%20" + link;
+  }
 
-  </div>
+  if (s === "booked") {
+    text.innerHTML = "🔴 <strong>BOOKED</strong><br><small>Currently working</small>";
+    btn.style.background = "#ef4444";
+    btn.style.color = "#111827";
+    btn.href = "https://wa.me/?text=Hi,%20I’m%20currently%20booked.%20Please%20check%20my%20availability%20here:%20" + link;
+  }
+}
+updateStatus();
+</script>
+
 </body>
 </html>
