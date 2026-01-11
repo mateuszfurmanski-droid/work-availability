@@ -14,11 +14,8 @@
       color:#e5e7eb;
       margin:0;
       padding:16px;
-
-      /* FIX: allow scroll on small screens */
       min-height:100vh;
       overflow-y:auto;
-
       display:flex;
       justify-content:center;
       align-items:flex-start;
@@ -32,7 +29,7 @@
       background:#020617;
       text-align:center;
       box-shadow:0 0 40px rgba(0,0,0,0.4);
-      margin:16px 0; /* gives breathing space when scrolling */
+      margin:16px 0;
     }
 
     h2{ margin:0; }
@@ -127,13 +124,14 @@
       justify-content:center;
     }
 
+    /* Main action buttons */
     .actions{
       display:flex;
       gap:12px;
       margin-top:16px;
     }
 
-    a.button{
+    a.button, button.button{
       flex:1;
       padding:14px;
       border-radius:10px;
@@ -143,12 +141,40 @@
       user-select:none;
       display:block;
       white-space:nowrap;
+      border:none;
+      cursor:pointer;
+      background:transparent;
+      color:#e5e7eb;
     }
 
     .call-btn, .cv-btn{
       background:#0b1220;
       color:#e5e7eb;
       border:1px solid rgba(148,163,184,0.25);
+    }
+
+    /* Utility buttons (copy/share) */
+    .utils{
+      display:flex;
+      gap:12px;
+      margin-top:12px;
+    }
+
+    .util-btn{
+      background:#0b1220;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,0.18);
+      padding:12px;
+      border-radius:10px;
+      font-weight:bold;
+      flex:1;
+    }
+
+    .toast{
+      margin-top:10px;
+      font-size:13px;
+      color:#94a3b8;
+      min-height:18px;
     }
 
     .hint{
@@ -211,33 +237,54 @@
     <a id="cvBtn" class="button cv-btn" target="_blank" rel="noopener">CV (PDF)</a>
   </div>
 
+  <div class="utils">
+    <button id="copyBtn" class="button util-btn" type="button">Copy link</button>
+    <button id="shareBtn" class="button util-btn" type="button">Share</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
   <div class="hint">
-    Tip: Choose status (if SOON, tap “Pick availability date”).
+    Tip: Choose status (if SOON, tap “Pick availability date”). Status is saved automatically.
   </div>
 
   <div class="profile">
     <strong>Mateusz Furmanski</strong> — Joiner / Carpenter / Shopfitter<br>
-    Leeds / Manchester / North West • Agencies welcome
+    Manchester / North West • Agencies welcome
   </div>
 </div>
 
 <script>
 (() => {
-  // UK number 07474744800 -> international digits:
-  const PHONE = "447474744800";
+  // CONFIG
+  const PHONE = "447474744800";                 // from 07474744800
   const CV_PDF = "Mateusz_Furmanski_CV_final.pdf";
 
+  // STORAGE KEYS
+  const LS_STATUS = "wa_status";
+  const LS_SOONDATE = "wa_soon_date";
+
+  // Elements
   const statusSelect = document.getElementById("statusSelect");
   const soonDate = document.getElementById("soonDate");
   const pickDateRow = document.getElementById("pickDateRow");
   const pickedDateText = document.getElementById("pickedDateText");
   const statusText = document.getElementById("statusText");
+
   const waBtn = document.getElementById("waBtn");
   const callBtn = document.getElementById("callBtn");
   const cvBtn = document.getElementById("cvBtn");
 
+  const copyBtn = document.getElementById("copyBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const toast = document.getElementById("toast");
+
+  // Links
   callBtn.href = `tel:+${PHONE}`;
   cvBtn.href = `./${CV_PDF}`;
+
+  // Canonical page URL (no ?v= cache)
+  const PAGE_URL = location.origin + location.pathname;
 
   function formatDMY(v){
     if(!v) return "";
@@ -245,10 +292,35 @@
     return `${d}/${m}/${y}`;
   }
 
+  function setToast(msg){
+    toast.textContent = msg || "";
+    if(msg){
+      clearTimeout(setToast._t);
+      setToast._t = setTimeout(() => { toast.textContent = ""; }, 1800);
+    }
+  }
+
   function setWA(bg, fg, msg){
     waBtn.style.background = bg;
     waBtn.style.color = fg;
     waBtn.href = `https://wa.me/${PHONE}?text=` + encodeURIComponent(msg);
+  }
+
+  function saveState(){
+    try {
+      localStorage.setItem(LS_STATUS, statusSelect.value);
+      localStorage.setItem(LS_SOONDATE, soonDate.value || "");
+    } catch(e) {}
+  }
+
+  function loadState(){
+    try {
+      const s = localStorage.getItem(LS_STATUS);
+      const d = localStorage.getItem(LS_SOONDATE);
+
+      if(s === "available" || s === "soon" || s === "booked") statusSelect.value = s;
+      if(d) soonDate.value = d;
+    } catch(e) {}
   }
 
   function update(){
@@ -279,10 +351,50 @@
         "Hi Mateusz, please keep us in mind for your next availability. Call us when free."
       );
     }
+
+    saveState();
   }
 
+  async function copyLink(){
+    try{
+      await navigator.clipboard.writeText(PAGE_URL);
+      setToast("Copied link ✅");
+    } catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = PAGE_URL;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); setToast("Copied link ✅"); }
+      catch(_) { setToast("Copy failed ❌"); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  async function shareLink(){
+    const text = `Work availability: ${PAGE_URL}`;
+    try{
+      if(navigator.share){
+        await navigator.share({ title: "Work availability", text, url: PAGE_URL });
+        setToast("Share opened ✅");
+      } else {
+        await copyLink();
+        setToast("No Share on this device — link copied ✅");
+      }
+    } catch(e){
+      // user cancelled is fine
+      setToast("");
+    }
+  }
+
+  // Events
   statusSelect.addEventListener("change", update);
   soonDate.addEventListener("change", update);
+  copyBtn.addEventListener("click", copyLink);
+  shareBtn.addEventListener("click", shareLink);
+
+  // Init
+  loadState();
   update();
 })();
 </script>
