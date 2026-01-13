@@ -48,7 +48,7 @@
       margin-top:12px;
     }
 
-    select, input[type="text"], input[type="tel"]{
+    select, input[type="text"], input[type="tel"], input[type="date"]{
       width:100%;
       padding:12px 12px;
       border-radius:10px;
@@ -86,37 +86,38 @@
       line-height:1;
     }
 
-    /* Edge-safe date picker row */
-    .pickdate{
-      position:relative;
-      width:100%;
+    /* Date row (real date input, styled) */
+    .date-row{
       margin-top:10px;
-      padding:12px 44px 12px 12px;
+      text-align:left;
+      padding:12px;
       border-radius:10px;
       border:1px solid rgba(148,163,184,0.18);
       background:#0b1220;
-      color:#e5e7eb;
-      text-align:left;
       box-shadow: 0 0 0 1px rgba(2,6,23,0.4) inset;
     }
-
-    .pickdate small{
-      display:block;
+    .date-row .label{
+      color:#e5e7eb;
+      font-weight:700;
+      font-size:14px;
+    }
+    .date-row .sub{
       margin-top:4px;
       color:#94a3b8;
       font-size:13px;
     }
 
-    .pickdate-real{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      opacity:0;
-      cursor:pointer;
+    .date-input-wrap{
+      position:relative;
+      margin-top:10px;
     }
 
-    .pickdate-icon{
+    /* make room for icon on right */
+    input[type="date"]{
+      padding-right:46px;
+    }
+
+    .date-icon{
       position:absolute;
       right:14px;
       top:50%;
@@ -128,7 +129,7 @@
       justify-content:center;
     }
 
-    /* Main action buttons */
+    /* Buttons */
     .actions{
       display:flex;
       gap:12px;
@@ -147,9 +148,12 @@
       white-space:nowrap;
       border:none;
       cursor:pointer;
-      background:transparent;
-      color:#e5e7eb;
     }
+
+    /* WhatsApp color states (FIX) */
+    .wa-green{ background:#22c55e; color:#022c22; }
+    .wa-yellow{ background:#eab308; color:#1f2937; }
+    .wa-red{ background:#ef4444; color:#111827; }
 
     .call-btn, .cv-btn{
       background:#0b1220;
@@ -224,6 +228,7 @@
       display:flex;
       gap:10px;
       margin-top:10px;
+      align-items:center;
     }
     .addrow button{
       flex:0 0 110px;
@@ -248,12 +253,6 @@
       background:#0b1220;
       border-radius:12px;
       padding:12px;
-    }
-    .card-top{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-start;
     }
     .card-title{
       font-weight:bold;
@@ -300,7 +299,6 @@
     .small-help{
       color:#94a3b8;
       font-size:12px;
-      margin-top:8px;
       line-height:1.25;
     }
   </style>
@@ -320,29 +318,34 @@
     <span class="right-icon"><span class="chevron">▾</span></span>
   </div>
 
-  <div id="pickDateRow" class="pickdate" style="display:none;">
-    Pick availability date
-    <small id="pickedDateText">Tap to select date</small>
-    <input id="soonDate" type="date" class="pickdate-real" aria-label="Pick availability date">
-    <span class="pickdate-icon" aria-hidden="true">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="16" y1="2" x2="16" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-        <circle cx="17" cy="17" r="4"/>
-        <line x1="17" y1="17" x2="17" y2="15"/>
-        <line x1="17" y1="17" x2="19" y2="17"/>
-      </svg>
-    </span>
+  <!-- Date (only for SOON) -->
+  <div id="dateBlock" class="date-row" style="display:none;">
+    <div class="label">Pick availability date</div>
+    <div class="sub" id="dateSub">Tap to select date</div>
+
+    <div class="date-input-wrap">
+      <input id="soonDate" type="date" aria-label="Pick availability date">
+      <span class="date-icon" aria-hidden="true">
+        <!-- yellow calendar+clock icon -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <circle cx="17" cy="17" r="4"/>
+          <line x1="17" y1="17" x2="17" y2="15"/>
+          <line x1="17" y1="17" x2="19" y2="17"/>
+        </svg>
+      </span>
+    </div>
   </div>
 
   <div id="statusText" class="status"></div>
 
   <div class="actions">
-    <a id="waBtn" class="button" target="_blank" rel="noopener">WhatsApp</a>
+    <a id="waBtn" class="button wa-green" target="_blank" rel="noopener">WhatsApp</a>
     <a id="callBtn" class="button call-btn">Call</a>
     <a id="cvBtn" class="button cv-btn" target="_blank" rel="noopener">CV (PDF)</a>
   </div>
@@ -355,61 +358,28 @@
   <div id="toast" class="toast"></div>
 
   <div class="hint">
-    Tip: Status + date are saved automatically.
+    Tip: Choose status (if SOON, pick date). Status is saved automatically.
   </div>
 
   <div class="profile">
     <strong>Mateusz Furmanski</strong> — Joiner / Carpenter / Shopfitter<br>
     Manchester / North West • Agencies welcome
   </div>
-
-  <!-- Agencies section -->
-  <div class="section">
-    <h3>Agencies / Managers</h3>
-
-    <div class="grid-2">
-      <div>
-        <input id="agName" type="text" placeholder="Name (e.g. Trades UK)" />
-      </div>
-      <div>
-        <input id="agPhone" type="tel" placeholder="Phone (07.. or +44..)" />
-      </div>
-    </div>
-
-    <div class="note">
-      <input id="agNote" type="text" placeholder="Note (optional) e.g. nights / better rates" />
-    </div>
-
-    <div class="addrow">
-      <button id="addAgencyBtn" type="button">Add</button>
-      <div class="small-help">
-        Stored on your device (localStorage). Not uploaded anywhere.
-      </div>
-    </div>
-
-    <div id="agencyList" class="list"></div>
-  </div>
 </div>
 
 <script>
 (() => {
-  // CONFIG
-  const YOUR_PHONE = "447474744800";                 // your phone (international digits)
+  const YOUR_PHONE = "447474744800";                 // your phone
   const CV_PDF = "Mateusz_Furmanski_CV_final.pdf";   // file in repo root
-
-  // Canonical page URL (no ?v=...)
   const PAGE_URL = location.origin + location.pathname;
 
-  // STORAGE KEYS
   const LS_STATUS = "wa_status";
   const LS_SOONDATE = "wa_soon_date";
-  const LS_AGENCIES = "wa_agencies_v1";
 
-  // Elements
   const statusSelect = document.getElementById("statusSelect");
+  const dateBlock = document.getElementById("dateBlock");
+  const dateSub = document.getElementById("dateSub");
   const soonDate = document.getElementById("soonDate");
-  const pickDateRow = document.getElementById("pickDateRow");
-  const pickedDateText = document.getElementById("pickedDateText");
   const statusText = document.getElementById("statusText");
 
   const waBtn = document.getElementById("waBtn");
@@ -420,13 +390,6 @@
   const shareBtn = document.getElementById("shareBtn");
   const toast = document.getElementById("toast");
 
-  const agName = document.getElementById("agName");
-  const agPhone = document.getElementById("agPhone");
-  const agNote = document.getElementById("agNote");
-  const addAgencyBtn = document.getElementById("addAgencyBtn");
-  const agencyList = document.getElementById("agencyList");
-
-  // Links
   callBtn.href = `tel:+${YOUR_PHONE}`;
   cvBtn.href = `./${CV_PDF}`;
 
@@ -444,43 +407,15 @@
     }
   }
 
-  function setWAForYourMainButton(bg, fg, msg){
-    waBtn.style.background = bg;
-    waBtn.style.color = fg;
+  function setWaClass(cls){
+    waBtn.classList.remove("wa-green","wa-yellow","wa-red");
+    waBtn.classList.add(cls);
+  }
+
+  function setMainWA(msg){
     waBtn.href = `https://wa.me/${YOUR_PHONE}?text=` + encodeURIComponent(msg);
   }
 
-  // ---- Phone normalization for agencies ----
-  // Accepts: "07..." or "+44..." or "447..." -> returns "447..."
-  function normalizeUKToWaDigits(input){
-    if(!input) return "";
-    let s = String(input).trim();
-
-    // keep only digits and plus
-    s = s.replace(/[^\d+]/g, "");
-
-    if(s.startsWith("+")) s = s.slice(1);
-
-    // If starts with 0 and length looks like UK mobile -> convert to 44
-    if(s.startsWith("0")) {
-      s = "44" + s.slice(1);
-    }
-
-    // If starts with 44 already, ok. If starts with 7 and length 10 -> assume missing 44
-    if(s.startsWith("7") && s.length === 10){
-      s = "44" + s;
-    }
-
-    return s;
-  }
-
-  function normalizeToTelHref(input){
-    if(!input) return "";
-    const wa = normalizeUKToWaDigits(input);
-    return wa ? `tel:+${wa}` : "";
-  }
-
-  // ---- State persistence ----
   function saveState(){
     try {
       localStorage.setItem(LS_STATUS, statusSelect.value);
@@ -492,112 +427,51 @@
     try {
       const s = localStorage.getItem(LS_STATUS);
       const d = localStorage.getItem(LS_SOONDATE);
-
       if(s === "available" || s === "soon" || s === "booked") statusSelect.value = s;
       if(d) soonDate.value = d;
     } catch(e) {}
   }
 
-  // ---- Agencies storage ----
-  function loadAgencies(){
-    try {
-      const raw = localStorage.getItem(LS_AGENCIES);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch(e){
-      return [];
-    }
-  }
-
-  function saveAgencies(arr){
-    try {
-      localStorage.setItem(LS_AGENCIES, JSON.stringify(arr));
-    } catch(e) {}
-  }
-
-  function makeStatusPayload(){
-    const s = statusSelect.value;
-    const d = soonDate.value ? formatDMY(soonDate.value) : "";
-
-    if(s === "available"){
-      return {
-        label: "AVAILABLE",
-        detail: "Ready to start now",
-        color: "green",
-        message: `Hi, I’m AVAILABLE now. Please call me. Link: ${PAGE_URL}`
-      };
-    }
-    if(s === "soon"){
-      const from = d ? `from ${d}` : "soon";
-      return {
-        label: "SOON",
-        detail: d ? `Available from ${d}` : "Available soon",
-        color: "yellow",
-        message: `Hi, I’ll be available ${from}. Please call me. Link: ${PAGE_URL}`
-      };
-    }
-    return {
-      label: "BOOKED",
-      detail: "Currently working",
-      color: "red",
-      message: `Hi, I’m currently BOOKED. Please call me for upcoming work. Link: ${PAGE_URL}`
-    };
-  }
-
-  // ---- Update main UI + WhatsApp message (2) includes date when SOON ----
   function update(){
     const s = statusSelect.value;
     const d = soonDate.value ? formatDMY(soonDate.value) : "";
 
     if(s === "available"){
-      pickDateRow.style.display = "none";
+      dateBlock.style.display = "none";
       statusText.innerHTML = "🟢 <strong>AVAILABLE</strong><br><small>Ready to start now</small>";
-
-      // Agency-style message to YOU (locked)
-      setWAForYourMainButton("#22c55e","#022c22",
-        "Hi Mateusz, we may have work available for you. Please call us when you can."
-      );
+      setWaClass("wa-green");
+      setMainWA("Hi Mateusz, we may have work available for you. Please call us when you can.");
     }
 
     if(s === "soon"){
-      pickDateRow.style.display = "block";
-      pickedDateText.textContent = d ? `Selected: ${d}` : "Tap to select date";
+      dateBlock.style.display = "block";
+      dateSub.textContent = d ? `Selected: ${d}` : "Tap to select date";
       statusText.innerHTML = "🟡 <strong>SOON</strong><br><small>" + (d ? ("Available from " + d) : "Available soon") + "</small>";
+      setWaClass("wa-yellow");
 
-      // Agency-style message to YOU + includes date (if set)
       const txt = d
-        ? `Hi Mateusz, we may have upcoming work for you from ${d}. Please call us when you can.`
-        : "Hi Mateusz, we may have upcoming work for you. Please call us when you can.";
+        ? `Hi Mateusz, we may have upcoming work for you from ${d}. Please call us when you can. Link: ${PAGE_URL}`
+        : `Hi Mateusz, we may have upcoming work for you. Please call us when you can. Link: ${PAGE_URL}`;
 
-      setWAForYourMainButton("#eab308","#1f2937", txt);
+      setMainWA(txt);
     }
 
     if(s === "booked"){
-      pickDateRow.style.display = "none";
+      dateBlock.style.display = "none";
       statusText.innerHTML = "🔴 <strong>BOOKED</strong><br><small>Currently working</small>";
-
-      setWAForYourMainButton("#ef4444","#111827",
-        "Hi Mateusz, please keep us in mind for your next availability. Call us when free."
-      );
+      setWaClass("wa-red");
+      setMainWA("Hi Mateusz, please keep us in mind for your next availability. Call us when free.");
     }
 
     saveState();
-    renderAgencies();
   }
 
-  // ---- Copy/share ----
   async function copyLink(){
     try{
       await navigator.clipboard.writeText(PAGE_URL);
       setToast("Copied link ✅");
     } catch(e){
-      const ta = document.createElement("textarea");
-      ta.value = PAGE_URL;
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); setToast("Copied link ✅"); }
-      catch(_) { setToast("Copy failed ❌"); }
-      document.body.removeChild(ta);
+      setToast("Copy failed ❌");
     }
   }
 
@@ -616,148 +490,13 @@
     }
   }
 
-  // ---- Agencies UI ----
-  function addAgency(){
-    const name = (agName.value || "").trim();
-    const phoneRaw = (agPhone.value || "").trim();
-    const note = (agNote.value || "").trim();
-
-    if(!name || !phoneRaw){
-      setToast("Name + phone required");
-      return;
-    }
-
-    const waDigits = normalizeUKToWaDigits(phoneRaw);
-    if(!waDigits){
-      setToast("Invalid phone");
-      return;
-    }
-
-    const agencies = loadAgencies();
-    agencies.push({
-      id: String(Date.now()) + Math.random().toString(16).slice(2),
-      name,
-      phoneRaw,
-      waDigits,
-      note
-    });
-    saveAgencies(agencies);
-
-    agName.value = "";
-    agPhone.value = "";
-    agNote.value = "";
-
-    setToast("Added ✅");
-    renderAgencies();
-  }
-
-  function removeAgency(id){
-    const agencies = loadAgencies().filter(a => a.id !== id);
-    saveAgencies(agencies);
-    setToast("Removed");
-    renderAgencies();
-  }
-
-  function renderAgencies(){
-    const agencies = loadAgencies();
-    agencyList.innerHTML = "";
-
-    if(agencies.length === 0){
-      const empty = document.createElement("div");
-      empty.className = "small-help";
-      empty.textContent = "No agencies saved yet.";
-      agencyList.appendChild(empty);
-      return;
-    }
-
-    const payload = makeStatusPayload();
-
-    agencies.forEach(a => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const top = document.createElement("div");
-      top.className = "card-top";
-
-      const left = document.createElement("div");
-      left.style.flex = "1";
-
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = a.name;
-
-      const sub = document.createElement("div");
-      sub.className = "card-sub";
-      sub.textContent = a.phoneRaw;
-
-      left.appendChild(title);
-      left.appendChild(sub);
-
-      if(a.note){
-        const note = document.createElement("div");
-        note.className = "card-note";
-        note.textContent = a.note;
-        left.appendChild(note);
-      }
-
-      top.appendChild(left);
-      card.appendChild(top);
-
-      const actions = document.createElement("div");
-      actions.className = "card-actions";
-
-      // WhatsApp
-      const wa = document.createElement("a");
-      wa.className = "mini mini-green";
-      wa.textContent = "WhatsApp";
-      wa.target = "_blank";
-      wa.rel = "noopener";
-      wa.href = `https://wa.me/${a.waDigits}`;
-      actions.appendChild(wa);
-
-      // Call
-      const call = document.createElement("a");
-      call.className = "mini";
-      call.textContent = "Call";
-      call.href = normalizeToTelHref(a.phoneRaw);
-      actions.appendChild(call);
-
-      // Send status
-      const send = document.createElement("a");
-      send.className = "mini " + (payload.color === "green" ? "mini-green" : payload.color === "yellow" ? "mini-yellow" : "mini-red");
-      send.textContent = "Send my status";
-      send.target = "_blank";
-      send.rel = "noopener";
-      send.href = `https://wa.me/${a.waDigits}?text=` + encodeURIComponent(payload.message);
-      actions.appendChild(send);
-
-      // Remove
-      const rm = document.createElement("button");
-      rm.className = "mini mini-danger";
-      rm.textContent = "Remove";
-      rm.type = "button";
-      rm.addEventListener("click", () => removeAgency(a.id));
-      actions.appendChild(rm);
-
-      card.appendChild(actions);
-      agencyList.appendChild(card);
-    });
-  }
-
-  // Events
   statusSelect.addEventListener("change", update);
   soonDate.addEventListener("change", update);
-
   copyBtn.addEventListener("click", copyLink);
   shareBtn.addEventListener("click", shareLink);
 
-  addAgencyBtn.addEventListener("click", addAgency);
-
-  // Init
   loadState();
-  renderAgencies();
   update();
-
 })();
 </script>
 </body>
